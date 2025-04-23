@@ -125,13 +125,35 @@ profil_sum <- profil_base_cout |>
 
 #et ensuite comparer les deux totaux.
 
+# le faireà partir des données du papier suivant qui regarde les différents coûts liés à la productivité au travail
+#https://academic.oup.com/humrep/article-abstract/26/9/2363/726459?redirectedFrom=PDF#google_vignette
+
+# on peut se concentrer les endométrioses graves (celles qui requièrent une opération (source?))
+#comparer les couts graves avec et sans opération, sachant qu'on ne peut pas opérer si on ne sait pas 
+#qu'on est porteur de la maladie
+#donc nécessité de diagnostique.
+#peut-être trouver un lien entre diagnostique et opération, pour prendre seulement une part. 
+#Ou on prend juste un nombre de diagnostique...
+
+
+# autres charactéristiques à ajouter 
+    # géographie : on suppose uniforme ? endométriose différée selon la localisation, 
+    # et/ou cout différent, non capté par les différences déjà évoquées ?
+    
+    # économique : ?
+    # 
+
+
+
+
+
+
 
 # Visualisation --------------
 endo_colors <- c("#95364e", "#d5a2ae", "#ddae4d")
 
-# ------------------------------ #
-#         INTERFACE UI          #
-# ------------------------------ #
+
+# Interface
 ui <- fluidPage(
   titlePanel("Estimation des Coûts de l'Endométriose par Profil"),
   
@@ -148,10 +170,7 @@ ui <- fluidPage(
   )
 )
 
-
-# ------------------------------ #
-#            SERVER             #
-# ------------------------------ #
+#serveur
 server <- function(input, output) {
   
   filteredData <- reactive({
@@ -195,11 +214,6 @@ server <- function(input, output) {
   })
 }
 
-
-
-
-# ------------------------------ #
-#        LANCEMENT APP          #
-# ------------------------------ #
+# Lancement
 shinyApp(ui = ui, server = server)
 
