@@ -3,11 +3,9 @@
 # -----------------------------------------------------------------------------#
 
 # Packages-------------
-library(writexl)
-library(readxl)
 library(ggplot2)
 library(dplyr)
-library(stargazer)
+library(shiny)
 
 
 # Données profil des femmes ----------
@@ -128,4 +126,80 @@ profil_sum <- profil_base_cout |>
 #et ensuite comparer les deux totaux.
 
 
+# Visualisation --------------
+endo_colors <- c("#95364e", "#d5a2ae", "#ddae4d")
+
+# ------------------------------ #
+#         INTERFACE UI          #
+# ------------------------------ #
+ui <- fluidPage(
+  titlePanel("Estimation des Coûts de l'Endométriose par Profil"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("statut", "Statut Professionnel", choices = unique(profil$Statut_Professionnel)),
+      selectInput("csp", "Catégorie Socio-Professionnelle", choices = unique(profil$Categorie_SocioPro)),
+      selectInput("contrat", "Type de Contrat", choices = unique(profil$Type_Contrat))
+    ),
+    
+    mainPanel(
+      plotOutput("costPlot")
+    )
+  )
+)
+
+
+# ------------------------------ #
+#            SERVER             #
+# ------------------------------ #
+server <- function(input, output) {
+  
+  filteredData <- reactive({
+    data_filtrée <- profil_base_cout %>%
+      filter(
+        Statut_Professionnel == input$statut,
+        Categorie_SocioPro == input$csp,
+        Type_Contrat == input$contrat
+      )
+    
+    niveaux_gravite <- c("Légère", "Modérée", "Grave")
+    
+    data_complète <- data.frame(
+      Gravite = niveaux_gravite
+    ) |>
+      left_join(data_filtrée, by = "Gravite") |>
+      mutate(
+        Cout_Total = ifelse(is.na(Cout_Total), 0, Cout_Total)
+      )
+    
+    return(data_complète)
+  })
+  
+  output$costPlot <- renderPlot({
+    data <- filteredData()
+    
+    ggplot(data, aes(x = Gravite, y = Cout_Total, fill = Gravite)) +
+      geom_bar(stat = "identity", show.legend = FALSE) +
+      scale_y_continuous(labels = scales::comma) +
+      labs(
+        title = "Coût Total selon la Gravité",
+        x = "Gravité de l'Endométriose",
+        y = "Coût Total (€)"
+      ) +
+      theme_minimal() +
+      theme(
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.title = element_text(hjust = 0.5)
+      ) +
+      scale_fill_manual(values = c("Légère" = "#95364e", "Modérée" = "#d5a2ae", "Grave" = "#ddae4d"))
+  })
+}
+
+
+
+
+# ------------------------------ #
+#        LANCEMENT APP          #
+# ------------------------------ #
+shinyApp(ui = ui, server = server)
 
