@@ -215,11 +215,20 @@ csp_percentages <- data.frame(
 # Coefficients CSP
 coeff_csp <- data.frame(
   Statut_Pro = c("Cadre", "Intermédiaire", "Employée"),
-  Coeff = c(1.5, 1.2, 1.0)
+  Coeff = c(1.15, 1.1, 1.0)
 )
 
+# Justification :
+      # une cadre aurait plus d'occasion de télétravail
+      # mais d'un autre côté, on suppose que son travail plus productif en termes de valeur
+      # perdre 1h de travail d'un cadre couterait + cher qu'1h d'un employé
+      # Donc on estime de coefficient
+  # de même pour les autres avec différentes raisons et motifs...
+
+
 # La fixation de coefficients est arbitraire
-# Il faut encore préciser, il y a 27 cas différents
+# Il faut encore préciser, il y a 9 cas différents pour l'instant, 
+# mais on pourrait ajouter les différentes catégories de pertes de productivités
 
 
 # Coût unitaire moyen par gravité
@@ -230,15 +239,17 @@ couts <- data.frame(
 
 # Montants inspirés de la littérature
 
-
 # Nombre de femmes par gravité
 nb_femmes <- data.frame(
   Gravite_Endometriose = c("Légère", "Modérée", "Grave"),
-  Nb_Femmes = c(225000, 1525000, 750000)
+  Nb_Femmes = c(164250, 1112200, 547550)  # 73% du total initial qui était (225000, 1525000, 750000)
 )
 
-# Source INSEE + Endotravail
-# (Non considération des sources Endovie)
+# Sachant qu'on réduit déja les nombres avec les 73% de l'endométriose handicapante 
+# Selon une enquête Endovie.
+
+
+# Source INSEE + Endotravail + Endovie-EndoFrance
 
 
 # Fusionner les données
@@ -262,6 +273,30 @@ df[, c("Gravite_Endometriose", "Statut_Pro", "Percentage", "Coeff", "Cout_Unitai
 
 
 
+# Recalcul des pourcentages sur l'ensemble de la base
+gravite_statut_percentages_global <- endo_data |> 
+  count(Statut_Pro, Gravite_Endometriose) |> 
+  mutate(Percentage = n / sum(n) * 100)
+
+
+# Total estimé de la population concernée (somme des femmes)
+total_femmes <- sum(nb_femmes$Nb_Femmes)
+
+
+# Fusionner les données globales
+df <- merge(gravite_statut_percentages_global, coeff_csp, by = "Statut_Pro")
+df <- merge(df, couts, by = "Gravite_Endometriose")
+df <- merge(df, nb_femmes, by = "Gravite_Endometriose")
+
+
+# Coût total basé sur pourcentage global appliqué à la population totale
+df$Cout_Total <- total_femmes * (df$Percentage / 100) * df$Coeff * df$Cout_Unitaire
+
+
+df[, c("Gravite_Endometriose", "Statut_Pro", "Percentage", "Coeff", "Cout_Unitaire", "Cout_Total")]
+
+
+sum(df$Cout_Total)
 
 
 
