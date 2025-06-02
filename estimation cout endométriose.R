@@ -170,6 +170,8 @@ ui <- fluidPage(
   )
 )
 
+
+
 #serveur
 server <- function(input, output) {
   

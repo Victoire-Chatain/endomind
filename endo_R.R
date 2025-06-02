@@ -54,7 +54,7 @@ doc <- write_xlsx(
 
 data_statut <- read_excel("Endotravail_synthese.xlsx", sheet = "Statut_Pro")
 
-View(data_statut)
+#View(data_statut)
 
 
 
@@ -214,21 +214,21 @@ ggplot(gravite_percentages, aes(x = "", y = Percentage, fill = Gravite_Endometri
 
 
 # Calcul des pourcentages de chaque métier dans chaque niveau de gravité
-gravite_statut_percentages <- endo_data %>%
-  count(Statut_Pro, Gravite_Endometriose) %>%     # Comptage des occurrences par statut et gravité
-  group_by(Gravite_Endometriose) %>%               # Groupement par gravité (niveau de douleur)
-  mutate(Percentage = n / sum(n) * 100)            # Calcul du pourcentage dans chaque groupe de gravité
+gravite_statut_percentages <- endo_data |> 
+  count(Statut_Pro, Gravite_Endometriose) |>      
+  group_by(Gravite_Endometriose) |>               
+  mutate(Percentage = n / sum(n) * 100)            
 
 # Création du graphique
 ggplot(gravite_statut_percentages, aes(x = Gravite_Endometriose, y = Percentage, fill = Statut_Pro)) +
-  geom_bar(stat = "identity", position = "dodge") +  # Affichage des barres dodgées pour chaque statut
-  scale_fill_manual(values = endo_colors) +           # Utilisation des couleurs définies précédemment
+  geom_bar(stat = "identity", position = "dodge") +  
+  scale_fill_manual(values = endo_colors) +           
   labs(title = "Répartition des métiers par gravité de l'endométriose", 
        x = "Gravité de l'endométriose", y = "Pourcentage des métiers") +
   theme_minimal() +
   theme(plot.title = element_text(color = "black", size = 16)) +
-  geom_text(aes(label = paste0(round(Percentage, 1), "%")),   # Affichage des pourcentages sur les barres
-            position = position_dodge(width = 0.9), vjust = -0.25)   # Positionnement du texte au-dessus des barres
+  geom_text(aes(label = paste0(round(Percentage, 1), "%")),   
+            position = position_dodge(width = 0.9), vjust = -0.25)   
 
 
 
@@ -259,7 +259,7 @@ emploi_insee_femmes <- emploi_insee |>
   select(1,3) 
 
 
-View(emploi_insee_femmes)
+#View(emploi_insee_femmes)
 
 
 
@@ -397,6 +397,61 @@ gravite_statut_percentages <- endo_data |>
 
 
 
+
+
+# Données CSP / gravité
+csp_percentages <- data.frame(
+  Statut_Pro = c("Cadre", "Cadre", "Cadre", "Employée", "Employée", "Employée", "Intermédiaire", "Intermédiaire", "Intermédiaire"),
+  Gravite_Endometriose = c("Grave", "Légère", "Modérée", "Grave", "Légère", "Modérée", "Grave", "Légère", "Modérée"),
+  Percentage = c(31.7, 9.0, 59.3, 30.6, 7.68, 61.7, 24.6, 11.6, 63.8)
+)
+
+# Coefficients CSP
+coeff_csp <- data.frame(
+  Statut_Pro = c("Cadre", "Intermédiaire", "Employée"),
+  Coeff = c(1.5, 1.2, 1.0)
+)
+
+# Coût unitaire moyen par gravité
+couts <- data.frame(
+  Gravite_Endometriose = c("Légère", "Modérée", "Grave"),
+  Cout_Unitaire = c(1260, 2520, 3780)
+)
+
+# Nombre de femmes par gravité
+nb_femmes <- data.frame(
+  Gravite_Endometriose = c("Légère", "Modérée", "Grave"),
+  Nb_Femmes = c(225000, 1525000, 750000)
+)
+
+# Fusionner les données
+df <- merge(csp_percentages, coeff_csp, by = "Statut_Pro")
+df <- merge(df, couts, by = "Gravite_Endometriose")
+df <- merge(df, nb_femmes, by = "Gravite_Endometriose")
+
+# Calcul coût total par groupe
+df$Cout_Total <- df$Nb_Femmes * (df$Percentage / 100) * df$Coeff * df$Cout_Unitaire
+
+# Voir le résultat
+df[, c("Gravite_Endometriose", "Statut_Pro", "Percentage", "Coeff", "Cout_Unitaire", "Nb_Femmes", "Cout_Total")]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Données : Proportions des femmes dans chaque catégorie professionnelle
 statut_proportion <- data.frame(
   Statut_Pro = c("Cadre", "Intermédiaire", "Employée"),
@@ -415,7 +470,7 @@ gravite_endometriose <- data.frame(
 data_ponderee <- left_join(statut_proportion, gravite_endometriose, by = "Statut_Pro")
 
 # Calcul des prévalences pondérées de chaque type d'endométriose
-data_ponderee <- data_ponderee %>%
+data_ponderee <- data_ponderee |> 
   mutate(
     Prevalence_Grave = Proportion * Grave_Percentage,
     Prevalence_Legere = Proportion * Legere_Percentage,
